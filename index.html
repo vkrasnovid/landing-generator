@@ -151,25 +151,6 @@
       50% { box-shadow: 0 0 0 6px rgba(108,99,255,0); }
     }
 
-    /* ===== STEP TITLES ===== */
-    .step-titles {
-      display: flex;
-      justify-content: space-between;
-      padding: 0 24px;
-      flex-shrink: 0;
-    }
-
-    .step-title-item {
-      font-size: 10px;
-      color: var(--text-dim);
-      text-align: center;
-      flex: 1;
-      transition: color 0.3s;
-    }
-
-    .step-title-item.active { color: var(--accent); font-weight: 600; }
-    .step-title-item.done { color: var(--text-muted); }
-
     /* ===== WIZARD CONTENT ===== */
     #wizard-content {
       flex: 1;
@@ -809,6 +790,7 @@
         <div class="step-subheading">Добавьте до 8 ваших услуг</div>
 
         <div class="service-list" id="service-list"></div>
+        <div class="error-msg" id="err-services">Заполните название для каждой услуги</div>
 
         <button class="btn btn-ghost" id="btn-add-service" style="width:100%;margin-top:12px" onclick="addService()">
           + Добавить услугу
@@ -821,6 +803,7 @@
         <div class="step-subheading">Добавьте до 6 участников команды</div>
 
         <div class="member-list" id="member-list"></div>
+        <div class="error-msg" id="err-team">Заполните имя для каждого участника</div>
 
         <button class="btn btn-ghost" id="btn-add-member" style="width:100%;margin-top:12px" onclick="addMember()">
           + Добавить участника
@@ -865,6 +848,7 @@
           <label>Сайт</label>
           <input type="url" id="website" placeholder="https://example.ru">
         </div>
+        <div class="error-msg" id="err-contacts">Рекомендуется указать хотя бы один контакт</div>
       </div>
 
       <!-- ===== STEP 5: STYLE ===== -->
@@ -943,7 +927,7 @@
 
     <div id="preview-container">
       <div id="preview-frame-wrapper">
-        <iframe id="preview-frame" sandbox="allow-same-origin allow-scripts"></iframe>
+        <iframe id="preview-frame" sandbox="allow-scripts"></iframe>
       </div>
     </div>
   </div>
@@ -958,6 +942,7 @@
 // ============================================================
 const APP = {
   step: 1,
+  maxStep: 1,
   data: {
     companyName: '',
     slogan: '',
@@ -1192,12 +1177,13 @@ function nextStep() {
   }
   const from = APP.step;
   APP.step++;
+  APP.maxStep = Math.max(APP.maxStep, APP.step);
   showStep(APP.step);
   console.debug('[WIZARD] step changed', { from, to: APP.step });
 }
 
 function goToStep(n) {
-  if (n < APP.step) {
+  if (n !== APP.step && n <= APP.maxStep) {
     const from = APP.step;
     APP.step = n;
     showStep(n);
@@ -1232,7 +1218,7 @@ function updateNav() {
   const btnNext = document.getElementById('btn-next');
   btnPrev.style.visibility = APP.step > 1 ? 'visible' : 'hidden';
   btnNext.textContent = APP.step === TOTAL_STEPS ? '✨ Сгенерировать' : 'Далее →';
-  btnNext.className = APP.step === TOTAL_STEPS ? 'btn btn-primary' : 'btn btn-primary';
+  btnNext.className = 'btn btn-primary';
 }
 
 // ============================================================
@@ -1252,6 +1238,55 @@ function validateStep(step) {
     } else {
       name.classList.remove('error');
       document.getElementById('err-companyName').classList.remove('show');
+    }
+  }
+
+  if (step === 2) {
+    const errEl = document.getElementById('err-services');
+    const emptyServices = APP.data.services.filter(s => !s.serviceName.trim());
+    document.querySelectorAll('#service-list input[type="text"]').forEach((input, i) => {
+      const svc = APP.data.services[i];
+      if (svc && !svc.serviceName.trim()) input.classList.add('error');
+      else input.classList.remove('error');
+    });
+    if (emptyServices.length > 0) {
+      if (errEl) errEl.classList.add('show');
+      valid = false;
+      missing.push('serviceName');
+    } else {
+      if (errEl) errEl.classList.remove('show');
+    }
+  }
+
+  if (step === 3) {
+    const errEl = document.getElementById('err-team');
+    const emptyMembers = APP.data.team.filter(m => !m.memberName.trim());
+    document.querySelectorAll('#member-list .member-card').forEach((card, i) => {
+      const input = card.querySelector('input[type="text"]');
+      const m = APP.data.team[i];
+      if (input && m && !m.memberName.trim()) input.classList.add('error');
+      else if (input) input.classList.remove('error');
+    });
+    if (emptyMembers.length > 0) {
+      if (errEl) errEl.classList.add('show');
+      valid = false;
+      missing.push('memberName');
+    } else {
+      if (errEl) errEl.classList.remove('show');
+    }
+  }
+
+  if (step === 4) {
+    const errEl = document.getElementById('err-contacts');
+    const hasContact = ['phone', 'email', 'address'].some(id => {
+      const el = document.getElementById(id);
+      return el && el.value.trim();
+    });
+    if (!hasContact) {
+      if (errEl) errEl.classList.add('show');
+      // Warning only — do not block navigation
+    } else {
+      if (errEl) errEl.classList.remove('show');
     }
   }
 
@@ -1644,6 +1679,7 @@ templates.minimal = function(data) {
 <meta name="description" content="${esc(slogan)}">
 <meta property="og:title" content="${esc(company)}">
 <meta property="og:description" content="${esc(slogan)}">
+<meta property="og:image" content="${heroPhoto}">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:#fff;color:#000;line-height:1.5}
@@ -1972,10 +2008,10 @@ function updatePreview() {
 // ============================================================
 function triggerGenerate() {
   showSpinner();
-  console.debug('[UI] spinner shown/hidden');
+  console.debug('[UI] generating and downloading landing');
   setTimeout(() => {
-    updatePreview();
     hideSpinner();
+    downloadHTML();
   }, 200);
 }
 
@@ -1997,7 +2033,8 @@ function downloadHTML() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'landing.html';
+  const slug = (APP.data.companyName || '').replace(/[^\w\u0400-\u04FF\s-]/g, '').trim().replace(/\s+/g, '-') || 'landing';
+  a.download = `${slug}-landing.html`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
