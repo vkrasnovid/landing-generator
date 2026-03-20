@@ -1149,7 +1149,7 @@ function bindInputs() {
     if (!el) return;
     el.addEventListener('input', () => {
       APP.data[id] = el.value;
-      console.debug('[WIZARD] field updated', { field: id, value: el.value });
+      console.debug('[WIZARD] field updated', { field: id });
       schedulePreviewUpdate();
     });
   });
@@ -1525,9 +1525,9 @@ templates.classic = function(data) {
   ].filter(Boolean).join('');
 
   const socialsHTML = [
-    data.vk ? `<a href="${esc(data.vk)}" target="_blank" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:${primary};color:#fff;text-decoration:none;font-size:18px">ВК</a>` : '',
+    data.vk && safeUrl(data.vk) ? `<a href="${esc(safeUrl(data.vk))}" target="_blank" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:${primary};color:#fff;text-decoration:none;font-size:18px">ВК</a>` : '',
     data.telegram ? `<a href="https://t.me/${esc(data.telegram.replace('@',''))}" target="_blank" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:${primary};color:#fff;text-decoration:none;font-size:16px">TG</a>` : '',
-    data.website ? `<a href="${esc(data.website)}" target="_blank" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:${primary};color:#fff;text-decoration:none;font-size:16px">🌐</a>` : ''
+    data.website && safeUrl(data.website) ? `<a href="${esc(safeUrl(data.website))}" target="_blank" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:${primary};color:#fff;text-decoration:none;font-size:16px">🌐</a>` : ''
   ].filter(Boolean).join('');
 
   const html = `<!DOCTYPE html>
@@ -1650,6 +1650,7 @@ templates.minimal = function(data) {
   const company = data.companyName || 'Ваша Компания';
   const slogan = data.slogan || 'Профессиональные решения';
   const desc = data.description || 'Мы создаём решения, которые меняют подход к бизнесу.';
+  const heroPhoto = data.heroPhoto || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600';
   const year = new Date().getFullYear();
 
   const servicesHTML = (data.services && data.services.length > 0)
@@ -1751,13 +1752,13 @@ ${data.team && data.team.length > 0 ? `
     ${data.email ? `<div class="contact-item">✉️ <a href="mailto:${esc(data.email)}">${esc(data.email)}</a></div>` : ''}
     ${data.address ? `<div class="contact-item">📍 ${esc(data.address)}</div>` : ''}
     ${data.telegram ? `<div class="contact-item">✈️ <a href="https://t.me/${esc(data.telegram.replace('@',''))}">${esc(data.telegram)}</a></div>` : ''}
-    ${data.vk ? `<div class="contact-item">💬 <a href="${esc(data.vk)}">ВКонтакте</a></div>` : ''}
+    ${data.vk && safeUrl(data.vk) ? `<div class="contact-item">💬 <a href="${esc(safeUrl(data.vk))}">ВКонтакте</a></div>` : ''}
   </div>
 </section>
 
 <footer>
   <span>&copy; ${year} ${esc(company)}</span>
-  ${data.website ? `<a href="${esc(data.website)}" style="color:${primary};text-decoration:none">${esc(data.website)}</a>` : ''}
+  ${data.website && safeUrl(data.website) ? `<a href="${esc(safeUrl(data.website))}" style="color:${primary};text-decoration:none">${esc(data.website)}</a>` : ''}
 </footer>
 </body>
 </html>`;
@@ -1950,8 +1951,8 @@ ${data.team && data.team.length > 0 ? `
       ${data.email ? `<div class="contact-card"><div class="contact-icon">✉️</div><div><div class="contact-label">Email</div><div class="contact-value"><a href="mailto:${esc(data.email)}">${esc(data.email)}</a></div></div></div>` : ''}
       ${data.address ? `<div class="contact-card"><div class="contact-icon">📍</div><div><div class="contact-label">Адрес</div><div class="contact-value">${esc(data.address)}</div></div></div>` : ''}
       ${data.telegram ? `<div class="contact-card"><div class="contact-icon">✈️</div><div><div class="contact-label">Telegram</div><div class="contact-value"><a href="https://t.me/${esc(data.telegram.replace('@',''))}">${esc(data.telegram)}</a></div></div></div>` : ''}
-      ${data.vk ? `<div class="contact-card"><div class="contact-icon">💬</div><div><div class="contact-label">ВКонтакте</div><div class="contact-value"><a href="${esc(data.vk)}">${esc(data.vk)}</a></div></div></div>` : ''}
-      ${data.website ? `<div class="contact-card"><div class="contact-icon">🌐</div><div><div class="contact-label">Сайт</div><div class="contact-value"><a href="${esc(data.website)}">${esc(data.website)}</a></div></div></div>` : ''}
+      ${data.vk && safeUrl(data.vk) ? `<div class="contact-card"><div class="contact-icon">💬</div><div><div class="contact-label">ВКонтакте</div><div class="contact-value"><a href="${esc(safeUrl(data.vk))}">${esc(data.vk)}</a></div></div></div>` : ''}
+      ${data.website && safeUrl(data.website) ? `<div class="contact-card"><div class="contact-icon">🌐</div><div><div class="contact-label">Сайт</div><div class="contact-value"><a href="${esc(safeUrl(data.website))}">${esc(data.website)}</a></div></div></div>` : ''}
     </div>
   </div>
 </div>
@@ -2080,6 +2081,13 @@ function esc(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;');
+}
+
+function safeUrl(url) {
+  if (!url) return '';
+  const u = String(url).trim();
+  if (/^(https?:\/\/|mailto:|tel:)/i.test(u)) return u;
+  return '';
 }
 
 // ============================================================
