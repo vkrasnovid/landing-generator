@@ -1519,9 +1519,9 @@ templates.classic = function(data) {
     : '';
 
   const contactsHTML = [
-    data.phone ? `<div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">📞</span><a href="tel:${esc(data.phone)}" style="color:#1a1a2e;text-decoration:none;font-size:16px">${esc(data.phone)}</a></div>` : '',
-    data.email ? `<div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">✉️</span><a href="mailto:${esc(data.email)}" style="color:#1a1a2e;text-decoration:none;font-size:16px">${esc(data.email)}</a></div>` : '',
-    data.address ? `<div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">📍</span><span style="font-size:16px;color:#1a1a2e">${esc(data.address)}</span></div>` : ''
+    data.phone ? `<div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">📞</span><a href="tel:${esc(data.phone)}" style="color:#fff;text-decoration:none;font-size:16px">${esc(data.phone)}</a></div>` : '',
+    data.email ? `<div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">✉️</span><a href="mailto:${esc(data.email)}" style="color:#fff;text-decoration:none;font-size:16px">${esc(data.email)}</a></div>` : '',
+    data.address ? `<div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">📍</span><span style="font-size:16px;color:#fff">${esc(data.address)}</span></div>` : ''
   ].filter(Boolean).join('');
 
   const socialsHTML = [
